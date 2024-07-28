@@ -43,15 +43,18 @@ internal class Program
             Console.WriteLine("Diffie-Hellman Key Exchange");
             while (isRunning)
             {
-                Console.WriteLine("Enter the modulus (p) which should be a prime number:");
-                BigInteger modulus = BigInteger.Parse(Console.ReadLine());
-                modulus = BigInteger.Abs(modulus);
-                if (!IsPrime((int)modulus))
+                BigInteger modulus;
+                while (true)
                 {
+                    Console.WriteLine("Enter the modulus (p) which should be a prime number:");
+                    string input = Console.ReadLine();
+                    if (BigInteger.TryParse(input, out modulus) && modulus > 0 && IsPrime((int)modulus))
+                    {
+                        break;
+                    }
                     Console.WriteLine("The number is not a prime number. Please enter a prime number.");
-                    isRunning = false;
-                    break;
                 }
+
                 Console.WriteLine("Enter the base number (g):");
                 BigInteger baseNumber = BigInteger.Parse(Console.ReadLine());
 
@@ -91,8 +94,19 @@ internal class Program
 
             Console.WriteLine("The number n is calculated by n = p * q:" + " " + n);
             Console.WriteLine("The number phi is calculated by phi = (p - 1) * (q - 1):" + phi);
-            Console.WriteLine("Pick a prime number between 1 and phi:");
-            BigInteger e = BigInteger.Parse(Console.ReadLine());
+
+            BigInteger e;
+            while (true)
+            {
+                Console.WriteLine("Pick a number between 1 and phi that has no common factors with phi:");
+                string input = Console.ReadLine();
+                if (BigInteger.TryParse(input, out e) && e > 1 && e < phi && BigInteger.GreatestCommonDivisor(e, phi) == 1)
+                {
+                    break;
+                }
+                Console.WriteLine("The number is not valid. Please enter a number between 1 and phi that has no common factors with phi.");
+            }
+
             Console.WriteLine("The public key is = (n, e) = (" + n + ", " + e + ")");
 
             BigInteger d = DiffieHellman.ModularMultiplicativeInverse(e, phi);
@@ -102,19 +116,25 @@ internal class Program
 
             Console.WriteLine("Encryption by public key");
             Console.WriteLine("Enter the word to encrypt:");
-            //Read the letter to encrypt as a char:
+            // Read the letter to encrypt as a char:
             string letter = Console.ReadLine();
+            if (string.IsNullOrEmpty(letter))
+            {
+                Console.WriteLine("Invalid input. Please enter a valid word.");
+                return;
+            }
+
             BigInteger[] encryptedNumberArray = DiffieHellman.encryptedNumberArray(letter, e, n);
             for (int i = 0; i < encryptedNumberArray.Length; i++)
             {
                 Console.WriteLine("The encrypted number is: " + encryptedNumberArray[i]);
             }
 
-            //Decryption by private key using the method:
+            // Decryption by private key using the method:
             BigInteger[] decryptedNumberArray = DiffieHellman.decryptedNumberArray(encryptedNumberArray, d, n);
             for (int i = 0; i < encryptedNumberArray.Length; i++)
             {
-                Console.WriteLine("The decrypted number is: " + encryptedNumberArray[i]);
+                Console.WriteLine("The decrypted number is: " + decryptedNumberArray[i]);
             }
             // Convert decrypted number array back to the word:
             string decryptedWord = "";
